@@ -1,0 +1,236 @@
+#!/bin/bash
+# Basic stuff to setup an intial system
+# Joshua Powers <mrpowersj@gmail.com>
+set -ux
+
+getent hosts us.archive.ubuntu.com
+rc="$?"
+if [ "$rc" != "0" ]; then
+	echo "Network not active."
+	exit 1
+fi
+
+APT=(
+	apt-rdepends
+	asciinema
+	bsdtar
+	byobu
+	bzr
+	bzr-stats
+	curl
+	devscripts
+	ethtool
+	fonts-hack-ttf
+	git
+	gnome-tweak-tool
+	gnupg
+	google-chrome-stable
+	gparted
+	htop
+	ipmitool
+	jekyll
+	jq
+	libavcodec-extra
+	libde265-0
+	lxd
+	meld
+	mutt
+	network-manager-openvpn-gnome
+	nfs-common
+	openvpn
+	pastebinit
+	patch
+	pycodestyle
+	pydocstyle
+	pyflakes3
+	pylint3
+	python3
+	python3-flake8
+	python3-git
+	qemu-kvm
+	sbuild
+	schroot
+	shellcheck
+	snapcraft
+	squid-deb-proxy-client
+	stow
+	sublime-text
+	tox
+	tree
+	ubuntu-dev-tools
+	uvtool
+	vim
+	virt-manager
+	vlc
+	zfsutils-linux
+)
+
+UNINSTALL=(
+	appstream
+	libreoffice-calc
+	libreoffice-common
+	libreoffice-core
+	libreoffice-math
+	libreoffice-impress
+	libreoffice-writer
+	rhythmbox
+	shotwell
+	thunderbird
+	totem
+)
+
+#####################################################################
+# APT Setup
+wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+ppa_chrome="/etc/apt/sources.list.d/google-chrome.list"
+if [ ! -e "$ppa_chrome" ]; then
+	echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a "$ppa_chrome" > /dev/null
+fi
+
+wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
+ppa_sublime="/etc/apt/sources.list.d/sublime-text.list"
+if [ ! -e "$ppa_sublime" ]; then
+	echo "deb https://download.sublimetext.com/ apt/dev/" | sudo tee -a "$ppa_sublime" > /dev/null
+fi
+
+apt_translations="/etc/apt/apt.conf.d/99translations"
+if [ ! -e "$apt_translations" ]; then
+	echo 'Acquire::Languages "none";' | sudo tee -a "$apt_translations" > /dev/null
+fi
+
+#####################################################################
+# Install and remove as necessary
+sudo apt-get clean
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get install -y "${APT[@]}"
+sudo apt-get purge -y "${UNINSTALL[@]}"
+
+#####################################################################
+# Dotfiles
+pushd dotfiles
+for dir in */; do
+	echo "Setting up $dir"
+	stow -v -t "$HOME" "$dir"
+done
+popd
+
+#####################################################################
+# Configure gnome
+if [ -e "$HOME"/Templates ]; then
+	rmdir "$HOME"/Templates
+fi
+
+if [ -e "$HOME"/Public ]; then
+	rmdir "$HOME"/Public
+fi
+
+if [ -e "$HOME"/examples.desktop ]; then
+	rm "$HOME"/examples.desktop
+fi
+
+gsettings set org.gnome.desktop.interface clock-show-date true
+gsettings set org.gnome.desktop.interface clock-show-seconds true
+gsettings set org.gnome.desktop.interface show-battery-percentage true
+gsettings set org.gnome.desktop.peripherals.mouse natural-scroll false
+gsettings set org.gnome.desktop.peripherals.touchpad natural-scroll false
+gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'google-chrome.desktop', 'sublime_text.desktop', 'org.gnome.gedit.desktop', 'vlc.desktop', 'org.gnome.Calculator.desktop']"
+gsettings set org.gtk.Settings.FileChooser show-hidden true
+gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+gsettings set org.gnome.nautilus.icon-view default-zoom-level 'small'
+
+mkdir -p "$HOME"/Pictures/backgrounds
+cp "$PWD"/img/background.png "$HOME"/Pictures/backgrounds
+gsettings set org.gnome.desktop.background picture-uri file:///"$HOME"/Pictures/backgrounds/background.png
+
+#####################################################################
+# Grub
+sudo sed -i 's/GRUB_HIDDEN_TIMEOUT=0/GRUB_HIDDEN_TIMEOUT=/' /etc/default/grub
+sudo sed -i 's/GRUB_TIMEOUT=10/GRUB_TIMEOUT=3/' /etc/default/grub
+sudo sed -i 's/quiet splash//' /etc/default/grub
+sudo sed -i '/GRUB_TERMINAL=console/s/^#//' /etc/default/grub
+sudo update-grub
+
+#####################################################################
+# Terminal
+# Theme
+wget -O monokai https://raw.githubusercontent.com/Mayccoll/Gogh/master/themes/monokai-dark.sh
+chmod +x monokai
+./monokai
+rm monokai
+
+# Settings
+profile_uuid=$(gsettings get org.gnome.Terminal.ProfilesList default | sed s/\'//g)
+key="org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$profile_uuid/"
+gsettings set "$key" use-system-font false
+gsettings set "$key" allow-bold true
+gsettings set "$key" scrollback-unlimited true
+gsettings set "$key" font "Hack Regular 12"
+
+#####################################################################
+# gedit
+gsettings set org.gnome.gedit.preferences.editor auto-save false
+gsettings set org.gnome.gedit.preferences.editor bracket-matching true
+gsettings set org.gnome.gedit.preferences.editor display-line-numbers true
+gsettings set org.gnome.gedit.preferences.editor display-right-margin true
+gsettings set org.gnome.gedit.preferences.editor editor-font "Hack 12"
+gsettings set org.gnome.gedit.preferences.editor highlight-current-line true
+gsettings set org.gnome.gedit.preferences.editor insert-spaces true
+gsettings set org.gnome.gedit.preferences.editor right-margin-position 72
+gsettings set org.gnome.gedit.preferences.editor scheme 'oblivion'
+gsettings set org.gnome.gedit.preferences.editor tabs-size 4
+gsettings set org.gnome.gedit.preferences.editor use-default-font false
+gsettings set org.gnome.gedit.preferences.ui max-recents 20
+
+#####################################################################
+# sublime
+# Install Package Control
+dir_sublime_pkgs="$HOME"/.config/sublime-text-3/Installed\ Packages/
+if [ ! -e "$dir_sublime_pkgs"/Package\ Control.sublime-package ]; then
+	mkdir -p "$dir_sublime_pkgs"
+	wget -NP "$dir_sublime_pkgs" https://packagecontrol.io/Package%20Control.sublime-package
+fi
+
+# Install Settings + Additonal Packages
+dir_sublime_settings="$HOME"/.config/sublime-text-3/Packages/User/
+mkdir -p "$dir_sublime_settings"
+git clone https://github.com/gerardroche/sublime-molokai.git ~/.config/sublime-text-3/Packages/molokai
+cp "$PWD"/sublime/Preferences.sublime-settings "$dir_sublime_settings"
+cp "$PWD"/sublime/Package\ Control.sublime-settings "$dir_sublime_settings"
+
+#####################################################################
+# lxd
+sudo lxd init --auto
+
+#####################################################################
+# fstab
+if ! grep -q z170 /etc/fstab; then
+	echo '192.168.3.2:/z170 /home/powersj/Backup    nfs   auto,nofail,noatime,nolock,intr,tcp,actimeo=1800  0   0' |
+		sudo tee -a /etc/fstab > /dev/null
+fi
+
+if ! grep -q nas /etc/fstab; then
+	echo '192.168.3.2:/nas /home/powersj/NAS    nfs   auto,nofail,noatime,nolock,intr,tcp,actimeo=1800  0   0' |
+		sudo tee -a /etc/fstab > /dev/null
+fi
+
+#####################################################################
+# bash prompt
+if [ ! -d "$HOME"/.bash-git-prompt ]; then
+	git clone https://github.com/magicmonty/bash-git-prompt.git .bash-git-prompt --depth=1
+
+	echo "GIT_PROMPT_ONLY_IN_REPO=1" >> ~/.bashrc
+	echo "source ~/.bash-git-prompt/gitprompt.sh" >> ~/.bashrc
+fi
+
+#####################################################################
+# Reminders of things I need to do that cannot be posted publicly
+echo "
+
+YOU MUST COMPLETE THE FOLLOWING:
+
+	* gpg keys
+	* ssh private keys
+	* work vpn settings
+
+"

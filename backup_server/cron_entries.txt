@@ -1,0 +1,10 @@
+# Friday check the health of the pool
+0 4 * * 4 /usr/local/sbin/zfs_health
+
+# Saturday scrub the disks and run health check again
+0 2 * * 5 /sbin/zpool scrub pool
+0 4 * * 5 /usr/local/sbin/zfs_health
+
+# Monday morning back it all up
+0 2 * * 0 /usr/local/sbin/zfs_backup x1
+0 4 * * 0 /usr/local/sbin/zfs_backup nas

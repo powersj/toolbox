@@ -1,0 +1,23 @@
+#!/bin/bash -ux
+# rsync laptop home directories to NAS 
+# Joshua Powers <mrpowersj@gmail.com>
+
+SRC="/home/powersj/"
+DST="/mnt/nas"
+SRV="192.168.1.100"
+SRV_DST="/x1"
+
+if [ "$(id -u)" != "0" ]; then
+  echo "This script must be run as root" 1>&2
+  exit 1
+fi
+
+mkdir -p "$DST"
+mount "$SRV":"$SRV_DST" "$DST"
+
+rsync --archive --delete --stats --human-readable --one-file-system \
+      --exclude-from="/usr/local/sbin/ignorelist" "$SRC" "$DST"
+sync
+
+umount "$DST"
+rmdir "$DST"

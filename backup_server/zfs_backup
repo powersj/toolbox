@@ -1,0 +1,28 @@
+#!/bin/bash -ux
+# Backup a ZFS share to a USB device.
+# Joshua Powers <mrpowersj@gmail.com>
+
+if [ "$(id -u)" != "0" ]; then
+  echo "This script must be run as root" 1>&2
+  exit 1
+fi
+
+# X1 Drive
+# USB_UUID="611e3254-9be4-4952-84d9-30d2569ec7b9"
+
+# NAS Drive
+# USB_UUID="ed03bdb3-a306-44e2-b6fc-7f8d7149a800"
+
+USB_UUID="$1"
+SRC="/x1/"
+DST="/mnt/usb_drive"
+
+mkdir -p "$DST"
+mount /dev/disk/by-uuid/"$USB_UUID" "$DST"
+
+rsync --archive --delete --stats --human-readable \
+	--one-file-system "$SRC" "$DST"
+sync
+
+umount "$DST"
+rmdir "$DST"

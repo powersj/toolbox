@@ -1,0 +1,10 @@
+#!/bin/bash
+# Basic setup of sbuild
+# Joshua Powers <mrpowersj@gmail.com>
+set -ux
+
+ARCH=$(dpkg --print-architecture)
+
+for release in $(distro-info --supported); do
+    mk-sbuild "$release" --arch="$ARCH"
+done
