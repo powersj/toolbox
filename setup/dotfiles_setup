@@ -3,7 +3,7 @@
 # Joshua Powers <mrpowersj@gmail.com>
 set -eux
 
-pushd dotfiles
+pushd dots 
 for dir in */; do
 	echo "Setting up $dir"
 	stow -v -t "$HOME" "$dir"
