@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Basic stuff to setup an intial system
+# Joshua Powers <mrpowersj@gmail.com>
+set -eux
+
+pushd dotfiles
+for dir in */; do
+	echo "Setting up $dir"
+	stow -v -t "$HOME" "$dir"
+done
+popd
+
