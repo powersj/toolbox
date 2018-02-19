@@ -36,6 +36,7 @@ APT=(
 	openvpn
 	pastebinit
 	patch
+	python3-setuptools
 	qemu-kvm
 	sbuild
 	shellcheck
@@ -148,12 +149,46 @@ sudo update-grub
 
 #####################################################################
 # Terminal
+
+sed -i 's/HISTSIZE=1000/HISTSIZE=100000/' ~/.bashrc
+sed -i 's/HISTFILESIZE=2000/HISTFILESIZE=200000/' ~/.bashrc
+
 # Theme
-THEME=freya
-wget -O "$THEME" https://raw.githubusercontent.com/Mayccoll/Gogh/master/themes/"$THEME".sh
-chmod +x "$THEME"
-./"$THEME"
-rm "$THEME"
+profile_count=$(gsettings get org.gnome.Terminal.ProfilesList list | wc -c)
+if [ "$profile_count" -lt 60 ]; then
+	THEME=freya
+	wget -O "$THEME" https://raw.githubusercontent.com/Mayccoll/Gogh/master/themes/"$THEME".sh
+	chmod +x "$THEME"
+	./"$THEME"
+	rm "$THEME"
+fi
+
+# Prompt
+if ! grep -q powerline ~/.bashrc; then
+	git clone https://github.com/banga/powerline-shell
+	pushd powerline-shell
+	sudo python3 setup.py install
+	popd
+	sudo rm -rf powerline-shell
+
+cat <<- 'EOF' >> ~/.bashrc
+function _update_ps1() {
+	PS1=$(powerline-shell $?)
+}
+
+if [[ $TERM != linux && ! $PROMPT_COMMAND =~ _update_ps1 ]]; then
+	PROMPT_COMMAND="_update_ps1; $PROMPT_COMMAND"
+fi
+EOF
+
+fi
+
+
+git clone https://github.com/powerline/powerline.git
+pushd powerline
+sudo python3 setup.py install
+popd
+sudo rm -rf powerline
 
 #####################################################################
 # gedit
@@ -185,15 +220,6 @@ fi
 if ! grep -q nas /etc/fstab; then
 	echo '192.168.1.10:/nas /home/powersj/NAS    nfs   auto,nofail,noatime,nolock,intr,tcp,actimeo=1800  0   0' |
 		sudo tee -a /etc/fstab > /dev/null
-fi
-
-#####################################################################
-# bash prompt
-if [ ! -d "$HOME"/.bash-git-prompt ]; then
-	git clone https://github.com/magicmonty/bash-git-prompt.git .bash-git-prompt --depth=1
-
-	echo "GIT_PROMPT_ONLY_IN_REPO=1" >> ~/.bashrc
-	echo "source ~/.bash-git-prompt/gitprompt.sh" >> ~/.bashrc
 fi
 
 #####################################################################

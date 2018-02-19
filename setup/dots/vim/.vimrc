@@ -68,12 +68,7 @@ set statusline=\ %F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l\ \ \ Col:\
 " Remove the Windows ^M - when the encodings gets messed up
 noremap <Leader>m mmHmt:%s/<C-V><cr>//ge<cr>'tzt'm
 
+python3 from powerline.vim import setup as powerline_setup
+python3 powerline_setup()
+python3 del powerline_setup
 
-" Powerline
-set rtp+=/usr/local/lib/python3.5/dist-packages/powerline/bindings/vim
-
-" Always show statusline
-set laststatus=2
-
-" Use 256 colours
-set t_Co=256
