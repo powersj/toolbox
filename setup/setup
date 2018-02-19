@@ -19,6 +19,7 @@ APT=(
 	curl
 	devscripts
 	ethtool
+	fonts-powerline
 	gconf2
 	git
 	gnupg
