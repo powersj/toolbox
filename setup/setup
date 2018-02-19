@@ -19,9 +19,10 @@ APT=(
 	curl
 	devscripts
 	ethtool
+	gconf2
 	git
 	gnupg
-    chromium-browser	
+        chromium-browser	
 	gparted
 	htop
 	influxdb-client
