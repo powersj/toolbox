@@ -99,6 +99,7 @@ sudo apt-get purge -y "${UNINSTALL[@]}"
 sudo snap install aws-cli --classic
 sudo snap install git-ubuntu --classic
 sudo snap install hugo
+sudo snap install image-status
 sudo snap install lxd
 sudo snap install multipass --classic --beta
 sudo snap install spotify
