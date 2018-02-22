@@ -32,6 +32,8 @@ APT=(
 	jq
 	libavcodec-extra
 	libde265-0
+	libpython3-dev
+	libpython2.7-dev
 	meld
 	network-manager-openvpn-gnome
 	nfs-common
