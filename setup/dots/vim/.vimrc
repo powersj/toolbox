@@ -44,7 +44,7 @@ set ffs=unix,dos,mac
 set nobackup
 set nowb
 set noswapfile
-:autocmd FileType mail :nmap <F8> :w<CR>:!aspell -e -c %<CR>:e<CR>
+setlocal spell spelllang=en_us
 
 " -- Tabs
 " 4 space tab indent width
@@ -57,7 +57,7 @@ set expandtab
 " Be smart when using tabs ;)
 set smarttab
 
-" See multipul spaces as an indent
+" See multiple spaces as an indent
 set softtabstop=4
 
 " -- Status Line
